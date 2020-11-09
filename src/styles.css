@@ -1,0 +1,60 @@
+body {
+  background-color: #121212;
+}
+#yt-chat-tools {
+  color: #EFEFEF;
+  font-family: Roboto, Calibri, serif;
+  margin-top: 56px;
+
+  height: 600px;
+  display: flex;
+}
+
+.section-title {
+  float: right;
+  font-weight: bold;
+  color: #606060;
+}
+
+.hidden {
+  display: none;
+}
+
+/* == Section: All chat */
+#all-chat {
+  font-size: 14px;
+  height: 100%;
+  width: 50%;
+  border-right: 1px solid #303030;
+  padding: 5px;
+
+  order: 1;
+}
+
+.yct-ac-line * {
+  display: inline-block;
+  padding-right: 4px;
+}
+.yct-ac-img {
+  width: 12px;
+  height: 12px;
+}
+.yct-ac-time {
+  color: #9f9f9f;
+  font-size: 12px;
+}
+.yct-ac-name {
+  color: #CECECE;
+  font-size: 13px;
+  font-weight: bold;
+}
+.yct-ac-message {
+  display: inline;
+}
+
+
+/* == Section: Top players */
+#top-players {
+  padding: 5px;
+  order: 2;
+}
