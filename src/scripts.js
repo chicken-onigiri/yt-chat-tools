@@ -14,8 +14,6 @@ window.onyctstartup = function(yctRoot) {
   yct.chatTemplate = document.getElementById('yct-ac-template');
   yct.chatAnchor = document.getElementById('yct-ac-anchor');
 
-  console.log(yct);
-
   setUpChatObserver();
 }
 
@@ -31,10 +29,15 @@ function onChat(chatRoot) {
   newChat.children[3].innerHTML = chatRoot.querySelector('#message').innerText;
 
   yct.chatRoot.insertBefore(newChat, yct.chatAnchor);
+  if (yct.chatRoot.children.length > MAX_MESSAGES) {
+    yct.chatRoot.removeChild(yct.chatRoot.children[0]);
+  }
+  // Scroll to bottom
+  yct.chatRoot.scrollTop = yct.chatRoot.scrollHeight - yct.chatRoot.offsetHeight;
 }
 
+/** Instantiates the chat observer to scrape chat messages. */
 function setUpChatObserver() {
-  console.log(yct);
   let chatRoot =
       document.getElementById('chatframe')
           .contentDocument
@@ -44,7 +47,7 @@ function setUpChatObserver() {
     return;
   }
 
-  let observer = new WebKitMutationObserver(function(mutations) {
+  let observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
       for(let i = 0; i < mutation.addedNodes.length; i++) {
         if (mutation.addedNodes[i].nodeName !== LIVE_CHAT_NODE_NAME) {
