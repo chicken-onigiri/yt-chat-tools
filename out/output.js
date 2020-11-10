@@ -55,6 +55,9 @@
   order: 1;
 }
 
+.yct-ac-line {
+  cursor: pointer;
+}
 .yct-ac-line * {
   display: inline-block;
   padding-right: 4px;
@@ -182,6 +185,9 @@ const yct = {
   chatRoot: null,
   chatTemplate: null,
   chatAnchor: null,
+
+  pauseChat: false,
+  pauseChatBuffer: [],
 };
 
 // Magic method called by startup-template.js
@@ -191,6 +197,17 @@ window.onyctstartup = function(yctRoot) {
   yct.chatAnchor = document.getElementById('yct-ac-anchor');
 
   setUpChatObserver();
+
+  yct.chatRoot.onmouseenter = function() {
+    yct.pauseChat = true;
+  };
+  yct.chatRoot.onmouseleave = function(e) {
+    yct.pauseChat = false;
+    yct.pauseChatBuffer.forEach(function(item) {
+      onChat(item);
+    });
+    yct.pauseChatBuffer = [];
+  };
 }
 
 /** Handles a single new chat message. */
@@ -203,6 +220,9 @@ function onChat(chatRoot) {
   newChat.children[1].innerHTML = chatRoot.querySelector('#timestamp').innerText;
   newChat.children[2].innerHTML = chatRoot.querySelector('#author-name').innerText;
   newChat.children[3].innerHTML = chatRoot.querySelector('#message').innerText;
+  newChat.onclick = function() {
+    newChat.style.textDecoration = "line-through";
+  };
 
   yct.chatRoot.insertBefore(newChat, yct.chatAnchor);
   if (yct.chatRoot.children.length > MAX_MESSAGES) {
@@ -230,7 +250,11 @@ function setUpChatObserver() {
           continue;
         }
 
-        onChat(mutation.addedNodes[i]);
+        if (yct.pauseChat) {
+          yct.pauseChatBuffer.push(mutation.addedNodes[i]);
+        } else {
+          onChat(mutation.addedNodes[i]);
+        }
       }
     })
   });

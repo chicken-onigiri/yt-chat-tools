@@ -29,6 +29,9 @@
   order: 1;
 }
 
+.yct-ac-line {
+  cursor: pointer;
+}
 .yct-ac-line * {
   display: inline-block;
   padding-right: 4px;
