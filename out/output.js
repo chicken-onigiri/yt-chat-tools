@@ -200,6 +200,17 @@ const LIVE_CHAT_NODE_NAME = 'YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER';
 const MAX_MESSAGES = 50;
 const REFLOW_TOP_EVERY = 10;
 
+const WEIGHTED_WORDS = {
+  "english": 5,
+  "alcohol": 5,
+  "a1coho1": 10,
+  "you should": 5,
+  "block all": 10,
+  "gensh1n": 10,
+  "not as interesting": 10,
+  "alcoho": 10,
+};
+
 const yct = {
   chatRoot: null,
   chatTemplate: null,
@@ -239,6 +250,11 @@ class UserChat {
     this.messageCount++;
     if (!!this.messages[message]) {
       this.score = this.score + 20;
+    }
+    for (let [word, score] of Object.entries(WEIGHTED_WORDS)) {
+      if (message.includes(word)) {
+        this.score = this.score + score;
+      }
     }
     this.messages[message] = 1;
     this.elementScore.innerHTML = this.score;
