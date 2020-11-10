@@ -11,6 +11,7 @@
   float: right;
   font-weight: bold;
   color: #606060;
+  font-size: 14px;
 }
 
 .hidden {
@@ -58,4 +59,15 @@
 #yct-top-players {
   padding: 5px;
   order: 2;
+  width: 50%;
+  font-size: 12px;
+  overflow-y: scroll;
+}
+
+.yct-tp-name {
+  display: inline-block;
+  width: 200px;
+}
+.yct-tp-score {
+  display: inline-block;
 }

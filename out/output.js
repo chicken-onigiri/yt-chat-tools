@@ -37,6 +37,7 @@
   float: right;
   font-weight: bold;
   color: #606060;
+  font-size: 14px;
 }
 
 .hidden {
@@ -84,6 +85,17 @@
 #yct-top-players {
   padding: 5px;
   order: 2;
+  width: 50%;
+  font-size: 12px;
+  overflow-y: scroll;
+}
+
+.yct-tp-name {
+  display: inline-block;
+  width: 200px;
+}
+.yct-tp-score {
+  display: inline-block;
 }
   `;
 
@@ -105,7 +117,13 @@
   </div>
 
   <div id="yct-top-players">
-    asdf
+    <div class="yct-section-title">Top Suspects</div>
+    <div>Tracking <span id="yct-tp-users">0</span> users; <span id="yct-tp-messages">0</span> messages</div>
+    <div id="yct-tp-container"></div>
+    <div id="yct-tp-template" class="hidden">
+      <div class="yct-tp-name">Example</div>
+      <div class="yct-tp-score">0 Points</div>
+    </div>
   </div>
 </div>
 
@@ -180,21 +198,63 @@
 
 const LIVE_CHAT_NODE_NAME = 'YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER';
 const MAX_MESSAGES = 50;
+const REFLOW_TOP_EVERY = 10;
 
 const yct = {
   chatRoot: null,
   chatTemplate: null,
   chatAnchor: null,
 
+  topTemplate: null,
+  topContainer: null,
+  topTrackerUsers: null,
+  topTrackerMessages: null,
+
   pauseChat: false,
   pauseChatBuffer: [],
 };
+const chat = {
+  reflowUpdateCount: 0,
+
+  // Object<String, UserChat>
+  users: {},
+};
+class UserChat {
+  constructor(name) {
+    this.score = 0;
+    this.messages = {};
+    this.messageCount = 0;
+
+    this.element = yct.topTemplate.cloneNode(/* deep= */ true);
+    this.element.id = "";
+    this.element.className = "yct-tp-line";
+
+    this.element.children[0].innerHTML = name;
+    this.elementScore = this.element.children[1];
+  }
+
+  addMessage(message) {
+    message = message.toLowerCase();
+    this.score++;
+    this.messageCount++;
+    if (!!this.messages[message]) {
+      this.score = this.score + 20;
+    }
+    this.messages[message] = 1;
+    this.elementScore.innerHTML = this.score;
+  }
+}
 
 // Magic method called by startup-template.js
 window.onyctstartup = function(yctRoot) {
   yct.chatRoot = document.getElementById('yct-chat');
   yct.chatTemplate = document.getElementById('yct-ac-template');
   yct.chatAnchor = document.getElementById('yct-ac-anchor');
+
+  yct.topTemplate = document.getElementById('yct-tp-template');
+  yct.topContainer = document.getElementById('yct-tp-container');
+  yct.topTrackerUsers = document.getElementById('yct-tp-users');
+  yct.topTrackerMessages = document.getElementById('yct-tp-messages');
 
   setUpChatObserver();
 
@@ -216,10 +276,13 @@ function onChat(chatRoot) {
   newChat.id = "";
   newChat.className = "yct-ac-line";
 
+  let authorName = chatRoot.querySelector('#author-name').innerText;
+  let message = chatRoot.querySelector('#message').innerText;
+
   newChat.children[0].src = chatRoot.querySelector('#img').src;
   newChat.children[1].innerHTML = chatRoot.querySelector('#timestamp').innerText;
-  newChat.children[2].innerHTML = chatRoot.querySelector('#author-name').innerText;
-  newChat.children[3].innerHTML = chatRoot.querySelector('#message').innerText;
+  newChat.children[2].innerHTML = authorName;
+  newChat.children[3].innerHTML = message;
   newChat.onclick = function() {
     newChat.style.textDecoration = "line-through";
   };
@@ -230,6 +293,30 @@ function onChat(chatRoot) {
   }
   // Scroll to bottom
   yct.chatRoot.scrollTop = yct.chatRoot.scrollHeight - yct.chatRoot.offsetHeight;
+
+  if (!chat.users[authorName]) {
+    chat.users[authorName] = new UserChat(authorName);
+  }
+  chat.users[authorName].addMessage(message);
+
+  chat.reflowUpdateCount++;
+  if (chat.reflowUpdateCount % REFLOW_TOP_EVERY === 0) {
+    let sortableUsers = [];
+    let messages = 0;
+    let users = 0;
+    for (let [name, user] of Object.entries(chat.users)) {
+      messages += user.messageCount;
+      users++;
+      sortableUsers.push([user.score, user])
+    }
+    let fullHtml = "";
+    sortableUsers.sort((a, b) => b[0] - a[0])
+    sortableUsers.forEach(pair => fullHtml += pair[1].element.outerHTML);
+
+    yct.topContainer.innerHTML = fullHtml;
+    yct.topTrackerMessages.innerHTML = messages;
+    yct.topTrackerUsers.innerHTML = users;
+  }
 }
 
 /** Instantiates the chat observer to scrape chat messages. */
