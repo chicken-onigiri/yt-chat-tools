@@ -16,7 +16,7 @@
 
   const YT_CONTENT_ROOT_ID = 'content';
   const YT_VIDEO_DATE_ID = 'date';
-  const YT_LIVE_CHAT_ROOT_QSS = '#chat';
+  const YT_LIVE_CHAT_IFRAME = 'chatframe';
   const YT_DATE_IS_STREAM_WORDS = 'stream';
 
   const YCT_MODAL_ROOT_ID = '#yt-chat-tools';
@@ -33,7 +33,7 @@
   display: flex;
 }
 
-.section-title {
+.yct-section-title {
   float: right;
   font-weight: bold;
   color: #606060;
@@ -44,12 +44,13 @@
 }
 
 /* == Section: All chat */
-#all-chat {
+#yct-chat {
   font-size: 14px;
   height: 100%;
   width: 50%;
   border-right: 1px solid #303030;
   padding: 5px;
+  overflow-y: scroll;
 
   order: 1;
 }
@@ -67,7 +68,7 @@
   font-size: 12px;
 }
 .yct-ac-name {
-  color: #CECECE;
+  color: #A0A0A0;
   font-size: 13px;
   font-weight: bold;
 }
@@ -77,7 +78,7 @@
 
 
 /* == Section: Top players */
-#top-players {
+#yct-top-players {
   padding: 5px;
   order: 2;
 }
@@ -87,20 +88,24 @@
   renderer.innerHTML = `
     
 <div id="yt-chat-tools">
-  <div id="all-chat">
-    <div class="section-title">All Chat</div>
-    <div class="yct-ac-line hidden">
-      <img class="yct-ac-img" src="https://yt3.ggpht.com/-j1XD5C7ySfw/AAAAAAAAAAI/AAAAAAAAAAA/c1jvcH95CdI/s32-c-k-c0x00ffffff-no-rj-mo/photo.jpg" />
+  <div id="yct-chat">
+    <div class="yct-section-title">All Chat</div>
+
+    <div id="yct-ac-anchor" class="hidden"></div>
+    <div id="yct-ac-template" class="hidden">
+      <img class="yct-ac-img"
+           src="https://yt3.ggpht.com/-j1XD5C7ySfw/AAAAAAAAAAI/AAAAAAAAAAA/c1jvcH95CdI/s32-c-k-c0x00ffffff-no-rj-mo/photo.jpg"/>
       <div class="yct-ac-time">10:31 AM</div>
       <div class="yct-ac-name">Example</div>
       <div class="yct-ac-message">This looks so messy</div>
     </div>
   </div>
 
-  <div id="top-players">
+  <div id="yct-top-players">
     asdf
   </div>
 </div>
+
   `;
 
   window.onyctstartup = function() {};
@@ -139,14 +144,13 @@
     }
     console.log(`YCT startup attempt ${startupAttempts} / ${MAX_STARTUP_ATTEMPTS}`);
 
-    let liveChatRoot = document.querySelector(YT_LIVE_CHAT_ROOT_QSS);
+    let liveChatRoot = document.getElementById(YT_LIVE_CHAT_IFRAME);
     if (!liveChatRoot) {
       console.log('Waiting for live chat....');
       setTimeout(waitForLiveChatStatus, TIME_BETWEEN_RETRIES_MS);
       return;
     }
-
-    startup();
+    liveChatRoot.onload = startup;
   }
 
   function startup() {
@@ -167,10 +171,66 @@
 })();
 
 (function() {
+  'use strict';
+
   
+
+const LIVE_CHAT_NODE_NAME = 'YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER';
+const MAX_MESSAGES = 50;
+
+const yct = {
+  chatRoot: null,
+  chatTemplate: null,
+  chatAnchor: null,
+};
 
 // Magic method called by startup-template.js
 window.onyctstartup = function(yctRoot) {
+  yct.chatRoot = document.getElementById('yct-chat');
+  yct.chatTemplate = document.getElementById('yct-ac-template');
+  yct.chatAnchor = document.getElementById('yct-ac-anchor');
 
+  console.log(yct);
+
+  setUpChatObserver();
+}
+
+/** Handles a single new chat message. */
+function onChat(chatRoot) {
+  let newChat = yct.chatTemplate.cloneNode(/* deep= */ true);
+  newChat.id = "";
+  newChat.className = "yct-ac-line";
+
+  newChat.children[0].src = chatRoot.querySelector('#img').src;
+  newChat.children[1].innerHTML = chatRoot.querySelector('#timestamp').innerText;
+  newChat.children[2].innerHTML = chatRoot.querySelector('#author-name').innerText;
+  newChat.children[3].innerHTML = chatRoot.querySelector('#message').innerText;
+
+  yct.chatRoot.insertBefore(newChat, yct.chatAnchor);
+}
+
+function setUpChatObserver() {
+  console.log(yct);
+  let chatRoot =
+      document.getElementById('chatframe')
+          .contentDocument
+          .querySelector('#chat-messages #contents #chat #contents #items');
+  if (!chatRoot) {
+    console.log('Could not find chat root, stopping');
+    return;
+  }
+
+  let observer = new WebKitMutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      for(let i = 0; i < mutation.addedNodes.length; i++) {
+        if (mutation.addedNodes[i].nodeName !== LIVE_CHAT_NODE_NAME) {
+          continue;
+        }
+
+        onChat(mutation.addedNodes[i]);
+      }
+    })
+  });
+  observer.observe(chatRoot, { childList: true });
 }
 })();

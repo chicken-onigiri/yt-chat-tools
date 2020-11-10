@@ -16,7 +16,7 @@
 
   const YT_CONTENT_ROOT_ID = 'content';
   const YT_VIDEO_DATE_ID = 'date';
-  const YT_LIVE_CHAT_ROOT_QSS = '#chat';
+  const YT_LIVE_CHAT_IFRAME = 'chatframe';
   const YT_DATE_IS_STREAM_WORDS = 'stream';
 
   const YCT_MODAL_ROOT_ID = '#yt-chat-tools';
@@ -67,14 +67,13 @@
     }
     console.log(`YCT startup attempt ${startupAttempts} / ${MAX_STARTUP_ATTEMPTS}`);
 
-    let liveChatRoot = document.querySelector(YT_LIVE_CHAT_ROOT_QSS);
+    let liveChatRoot = document.getElementById(YT_LIVE_CHAT_IFRAME);
     if (!liveChatRoot) {
       console.log('Waiting for live chat....');
       setTimeout(waitForLiveChatStatus, TIME_BETWEEN_RETRIES_MS);
       return;
     }
-
-    startup();
+    liveChatRoot.onload = startup;
   }
 
   function startup() {
@@ -95,5 +94,7 @@
 })();
 
 (function() {
+  'use strict';
+
   ${3}
 })();
